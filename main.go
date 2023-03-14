@@ -42,27 +42,13 @@ func (m *Mongodb) GetDatabases() {
 }
 
 func (m *Mongodb) RunFindInAllCollections() {
-loop:
 	for _, database := range m.Databases {
-		if configEnv == "dev" {
-			if database == "network-energy" || database == "QBR" || database == "qbr" || database == "ScalaDrillTest" || database == "notasFiscais_dev" || database == "test" || database == "test_powerBI" || database == "ScalaCosts" {
-				continue loop
-			}
-		}
-		if configEnv == "prod" {
-			if database == "test" || database == "geographic" {
-				continue loop
-			}
-		}
 		collections, err := m.Client.Database(database).ListCollectionNames(m.ctx, bson.M{})
 		if err != nil {
 			panic(err)
 		}
 		for _, collection := range collections {
 
-			if collection == "clients" || collection == "data-center-power-consumption" || collection == "manual-data-snapshot" || collection == "data-centers-to-crawl" || collection == "crawler-history" || collection == "EnergyData" || configEnv == "prod" && collection == "users" {
-				continue
-			}
 			cursor, err := m.Client.Database(database).Collection(collection).Find(m.ctx, bson.M{})
 			if err != nil {
 				panic(err)
@@ -76,7 +62,7 @@ loop:
 
 			now := time.Now()
 			filename := fmt.Sprintf("%s_%s_%s.json", database, collection, now.Format("20060102150405"))
-			file, err := os.Create("/home/victorguidi/projects/golang/backupFiles/backups/" + filename)
+			file, err := os.Create(filename)
 			if err != nil {
 				panic(err)
 			}
@@ -92,7 +78,7 @@ loop:
 }
 
 func main() {
-	flag.StringVar(&configEnv, "c", "", "config file path")
+	flag.StringVar(&configEnv, "c", "", "config env (dev or prod)")
 	flag.Parse()
 
 	if configEnv == "" {
